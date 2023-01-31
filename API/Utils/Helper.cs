@@ -4,8 +4,15 @@ namespace KFinance.Utils
 {
     public class Helper
     {
-        public Helper() { }
-        public string CalculatePercentageChange(List<History> res, RequestDTO requestDTO)
+        private readonly HttpClient client = new()
+        {
+            BaseAddress = new Uri("https://financialmodelingprep.com/api/v3"),
+        };
+        private readonly IConfiguration _config;
+        public Helper(IConfiguration config) {
+            _config = config;
+        }
+        public string CalculateROI(List<History> res, RequestDTO requestDTO)
         {
             decimal invested = 0M;
             decimal totalCurrentValue = 0M;
@@ -46,12 +53,10 @@ namespace KFinance.Utils
                 result += String.Format("{0, -20} - {1, 20}\n", "Before", "After");
                 result += String.Format("{0, -20} - {1, 20}\n", invested, totalCurrentValue);
             }
-
-            //MachineLearning(res, requestDTO);
             return percentChange.ToString();
         }
 
-        public string MachineLearning(List<History> histories, RequestDTO requestDTO)
+        public string CalculatePosibility(List<History> histories, RequestDTO requestDTO)
         {
             DateTime start = histories[0].Date;
             DateTime end = histories[^1].Date;
@@ -62,37 +67,42 @@ namespace KFinance.Utils
                 years[i] = start.AddYears(i).Year;
             }
             Dictionary<string, string> records = new(); // "2012 - 2015" : 0.3526
-            /*
-            int gap = 1;
-            while(gap <= length)
-            {
-                while(start.Year + gap <= end.Year)
-                {
-                    requestDTO.Start = start;
-                    requestDTO.End = start.AddYears(gap);
-                    records.Add($"{start.ToString()} - {end.ToString()}", CalculatePercentageChange(histories, requestDTO));
-                    //records.Add(new KeyValuePair<string, string>($"{start.ToString()} - {end.ToString()}", CalculatePercentageChange(histories, requestDTO)));
-    
-                }
-                gap++;
-            }
-            */
+                                                        
             for(int i = 0; i < length; i++)
             {
                 for(int j = i + 1; j < length; j++)
                 {
                     requestDTO.Start = new DateTime(years[i], 1,1);
                     requestDTO.End = new DateTime(years[j], 1, 1);
-                    records.Add($"{requestDTO.Start.Year.ToString()} - {requestDTO.End.Year.ToString()}", CalculatePercentageChange(histories, requestDTO));
+                    records.Add($"{requestDTO.Start.Year.ToString()} - {requestDTO.End.Year.ToString()}", CalculateROI(histories, requestDTO));
                 }
             }
             var s = from temp in records orderby Convert.ToDecimal(temp.Value) ascending select temp;
             string result = string.Empty;
-            foreach(var item in s)
+            result += string.Format("{0, -30} - {1, 10}%\n", "1-1-YYYY  --- 12-31-YYYY", "Percentage Change");
+            foreach (var item in s)
             {
                 result += string.Format("{0, -30} - {1, 10}%\n", item.Key, Math.Round(Convert.ToDecimal(item.Value)*100, 2));
             }
             return result;
+        }
+
+        public async Task<List<History>> GetHistorical(RequestDTO requestDTO)
+        {
+            string apikey = this._config["FMP:Apikey"]!;
+            string parameters = $"?apikey={apikey}";
+
+            string url = client.BaseAddress!.ToString() + $"/historical-price-full/{requestDTO.TickerSymbol}";
+            client.BaseAddress = new Uri(url);
+
+            using var temp = await client.GetAsync(parameters);
+            var a = await temp.Content.ReadAsStringAsync();
+
+            var res = await temp.Content.ReadFromJsonAsync<ResponseFromAPI>();
+            List<History> historical = res.Historical;
+            historical.Sort();
+
+            return historical;
         }
     }
 }

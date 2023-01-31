@@ -9,45 +9,25 @@ namespace KFinance.Controllers
     public class FmpController : Controller
     {
         private readonly Helper _helper;
-        private readonly HttpClient client = new()
-        {
-            BaseAddress = new Uri("https://financialmodelingprep.com/api/v3"),
-        };
-        private readonly IConfiguration _config;
         public FmpController(IConfiguration config)
         {
-            _config = config;
-            _helper = new Helper();
+            _helper = new Helper(config);
         }
 
-        [HttpGet()]
-        public async Task<string> GetPrice(RequestDTO requestDTO)
+        [HttpGet("getROI")]
+        public async Task<string> GetROI(RequestDTO requestDTO)
         {
-            try
-            {
-                string apikey = this._config["FMP:Apikey"]!;
-                string parameters = $"?apikey={apikey}";
+            var historical = await _helper.GetHistorical(requestDTO);
 
-                string url = client.BaseAddress!.ToString() + $"/historical-price-full/{requestDTO.TickerSymbol}";
-                client.BaseAddress = new Uri(url);
+            return _helper.CalculateROI(historical, requestDTO);
+        }
 
-                using var temp = await client.GetAsync(parameters);
-                var a = await temp.Content.ReadAsStringAsync();
+        [HttpGet("getPossibility")]
+        public async Task<string> GetPossibility(RequestDTO requestDTO)
+        {
+            var historical = await _helper.GetHistorical(requestDTO);
 
-                var res = await temp.Content.ReadFromJsonAsync<ResponseFromAPI>();
-                List<History> historical = res.Historical;
-                historical.Sort();
-
-                //return _helper.CalculatePercentageChange(historical, requestDTO);
-
-
-                return _helper.MachineLearning(historical, requestDTO);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                return e.Message.ToString();
-            }
+            return _helper.CalculatePosibility(historical, requestDTO);
         }
     }
 }
