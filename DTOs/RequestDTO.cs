@@ -11,7 +11,7 @@ namespace KFinance.DTOs
         [Required]
         public DateTime End { get; set; }
         [Required]
-        public int Amount { get; set; }
+        public decimal Amount { get; set; }
         [Required]
         public int Frequency { get; set; }
     }
