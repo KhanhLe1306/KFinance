@@ -86,7 +86,7 @@ namespace KFinance.Utils
                     records.Add($"{requestDTO.Start.Year.ToString()} - {requestDTO.End.Year.ToString()}", CalculatePercentageChange(histories, requestDTO));
                 }
             }
-            var s = from temp in records orderby temp.Value ascending select temp;
+            var s = from temp in records orderby Convert.ToDecimal(temp.Value) ascending select temp;
             string result = string.Empty;
             foreach(var item in s)
             {
