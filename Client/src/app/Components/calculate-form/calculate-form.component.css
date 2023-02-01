@@ -1,0 +1,13 @@
+.calculate_form{
+    width: 300px;
+    margin: auto;
+}
+
+.calculate_form div{
+    margin-bottom: 10px;
+}
+
+label{
+    display: inline-block;
+    width: 100px;
+}

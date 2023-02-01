@@ -12,8 +12,9 @@ namespace KFinance.Utils
         public Helper(IConfiguration config) {
             _config = config;
         }
-        public string CalculateROI(List<History> res, RequestDTO requestDTO)
+        public ROIResponse CalculateROI(List<History> res, RequestDTO requestDTO)
         {
+            List<BuyDetail> buyDetails = new();
             decimal invested = 0M;
             decimal totalCurrentValue = 0M;
             decimal shares = 0M;
@@ -39,6 +40,14 @@ namespace KFinance.Utils
                                 shares += requestDTO.Amount / item.Open;
                                 buyCount++;
                                 //result += String.Format("{0,-30} - {1, -10} - {2,10} - {3,5}\n", item.Date.Date, Math.Round(item.Open, 4), Math.Round(requestDTO.Amount / item.Open, 4), buyCount);
+                                buyDetails.Add(new BuyDetail
+                                {
+                                    BuyDate = item.Date,
+                                    Shares = requestDTO.Amount / item.Open,
+                                    Amount = requestDTO.Amount,
+                                    TotalShares = shares,
+                                    AccumulatedPercentageChange = Math.Round((shares * item.Close) / (buyCount * requestDTO.Amount), 4) - 1
+                                });
                                 break;
                             }
                         }
@@ -53,10 +62,16 @@ namespace KFinance.Utils
                 result += String.Format("{0, -20} - {1, 20}\n", "Before", "After");
                 result += String.Format("{0, -20} - {1, 20}\n", invested, totalCurrentValue);
             }
-            return percentChange.ToString();
+            return new ROIResponse
+            {
+                PercentageChange = percentChange,
+                TotalInvested = Math.Round(invested, 2),
+                CurrentInvestment = Math.Round(totalCurrentValue, 2),
+                BuyDetails = buyDetails,
+            };
         }
 
-        public string CalculatePosibility(List<History> histories, RequestDTO requestDTO)
+        public Dictionary<string,string> CalculatePosibility(List<History> histories, RequestDTO requestDTO)
         {
             DateTime start = histories[0].Date;
             DateTime end = histories[^1].Date;
@@ -74,7 +89,7 @@ namespace KFinance.Utils
                 {
                     requestDTO.Start = new DateTime(years[i], 1,1);
                     requestDTO.End = new DateTime(years[j], 1, 1);
-                    records.Add($"{requestDTO.Start.Year.ToString()} - {requestDTO.End.Year.ToString()}", CalculateROI(histories, requestDTO));
+                    records.Add($"{requestDTO.Start.Year.ToString()} - {requestDTO.End.Year.ToString()}", CalculateROI(histories, requestDTO).PercentageChange.ToString());
                 }
             }
             var s = from temp in records orderby Convert.ToDecimal(temp.Value) ascending select temp;
@@ -84,7 +99,8 @@ namespace KFinance.Utils
             {
                 result += string.Format("{0, -30} - {1, 10}%\n", item.Key, Math.Round(Convert.ToDecimal(item.Value)*100, 2));
             }
-            return result;
+            //return result;
+            return records;
         }
 
         public async Task<List<History>> GetHistorical(RequestDTO requestDTO)

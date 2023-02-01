@@ -14,8 +14,8 @@ namespace KFinance.Controllers
             _helper = new Helper(config);
         }
 
-        [HttpGet("getROI")]
-        public async Task<string> GetROI(RequestDTO requestDTO)
+        [HttpPost("getROI")]
+        public async Task<ROIResponse> GetROI(RequestDTO requestDTO)
         {
             var historical = await _helper.GetHistorical(requestDTO);
 
@@ -23,7 +23,7 @@ namespace KFinance.Controllers
         }
 
         [HttpGet("getPossibility")]
-        public async Task<string> GetPossibility(RequestDTO requestDTO)
+        public async Task<Dictionary<string,string>> GetPossibility(RequestDTO requestDTO)
         {
             var historical = await _helper.GetHistorical(requestDTO);
 

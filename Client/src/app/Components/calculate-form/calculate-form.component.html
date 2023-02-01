@@ -1,0 +1,42 @@
+<form
+  class="calculate_form"
+  [formGroup]="calculateForm"
+  (ngSubmit)="onSubmit()"
+>
+  <div>
+    <label for="tickerSymbol">TickerSymbol:</label>
+    <input id="tickerSymbol" type="text" formControlName="tickerSymbol" />
+  </div>
+  <div>
+    <label for="start">From:</label>
+    <input id="start" type="date" formControlName="start" />
+  </div>
+  <div>
+    <label for="end">To:</label>
+    <input id="end" type="date" formControlName="end" />
+  </div>
+  <div>
+    <label for="amount">Amount:</label>
+    <input id="amount" type="number" formControlName="amount" />
+  </div>
+  <div>
+    <label for="frequency">Frequency:</label>
+    <input id="frequency" type="number" formControlName="frequency" />
+  </div>
+  <button type="submit" [disabled]="!calculateForm.valid">Calculate</button>
+</form>
+
+<div *ngIf="data" style="width: 300px; margin: auto">
+  <div>
+    <span>Total Invested: </span>
+    <span>{{ data.totalInvested }}</span>
+  </div>
+  <div>
+    <span>Current Investment Worth: </span>
+    <span>{{ data.currentInvestment }}</span>
+  </div>
+  <div>
+    <span>Percentage Change: </span>
+    <span>{{ data.percentageChange }}</span>
+  </div>
+</div>
